@@ -1,53 +1,48 @@
-# To learn more about how to use Nix to configure your environment
-# see: https://developers.google.com/idx/guides/customize-idx-env
 { pkgs, ... }: {
-  # Which nixpkgs channel to use.
+  # The channel determines which package versions are available.
   channel = "stable-24.05"; # or "unstable"
-  # Use https://search.nixos.org/packages to find packages
+
+  # A list of packages to install from the specified channel.
   packages = [
-    # pkgs.go
-    # pkgs.python311
-    # pkgs.python311Packages.pip
-    # pkgs.nodejs_20
-    # pkgs.nodePackages.nodemon
+    pkgs.python3
+    # Added pip to the environment
+    pkgs.pip
+    pkgs.android-studio
+    pkgs.jdk
+    pkgs.gradle
+    pkgs.nodejs_20
+    # Added tree-sitter for universal code parsing
+    pkgs.tree-sitter
+    pkgs.typescript
+    pkgs.ts-node
   ];
-  # Sets environment variables in the workspace
-  env = {};
+
+  # A set of environment variables to define within the workspace.
+  env = {
+    API_KEY = "your-secret-key";
+  };
+
+  # A list of VS Code extensions to install from the Open VSX Registry.
   idx = {
-    # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
-      # "vscodevim.vim"
-      "google.gemini-cli-vscode-ide-companion"
+      "vscodevim.vim"
+      "ms-python.python"
+      "dbaeumer.vscode-eslint"
+      "vscjava.vscode-java-pack"
+      "naco-siren.gradle-language"
     ];
-    # Enable previews
-    previews = {
-      enable = true;
-      previews = {
-        # web = {
-        #   # Example: run "npm run dev" with PORT set to IDX's defined port for previews,
-        #   # and show it in IDX's web preview panel
-        #   command = ["npm" "run" "dev"];
-        #   manager = "web";
-        #   env = {
-        #     # Environment variables to set for your server
-        #     PORT = "$PORT";
-        #   };
-        # };
-      };
-    };
-    # Workspace lifecycle hooks
+
+    # Workspace lifecycle hooks.
     workspace = {
-      # Runs when a workspace is first created
+      # Runs when a workspace is first created.
       onCreate = {
-        # Example: install JS dependencies from NPM
-        # npm-install = "npm install";
-        # Open editors for the following files by default, if they exist:
-        default.openFiles = [ ".idx/dev.nix" "README.md" ];
+        npm-install = "npm install";
+        # Install tree-sitter libraries for Python
+        pip-install-treesitter = "pip install tree-sitter tree-sitter-languages";
       };
-      # Runs when the workspace is (re)started
+      # Runs every time the workspace is (re)started).
       onStart = {
-        # Example: start a background task to watch and re-build backend code
-        # watch-backend = "npm run watch-backend";
+        start-server = "echo 'Android dev environment ready'";
       };
     };
   };
