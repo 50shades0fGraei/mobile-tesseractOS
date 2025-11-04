@@ -1,0 +1,5 @@
+# This file lists the Python packages required by the programs in Tesseract OS.
+# The .idx/dev.nix file is configured to install these automatically.
+
+requests
+Flask
