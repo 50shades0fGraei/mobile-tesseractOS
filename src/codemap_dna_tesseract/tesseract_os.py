@@ -1,74 +1,91 @@
-# Codemap-DNA-tesseract/tesseract_os.py
 
 import os
-import json
-from parser import CodeParser
+import pty
+import eventlet
+from flask import Flask, send_from_directory, request
+from flask_socketio import SocketIO, emit
 
-class TesseractOS:
-    """
-    The central orchestrator for the Tesseract Operating System.
-    It loads programs, assigns them a unique entry order, and manages the
-    master address library for all code in the project.
-    """
-    def __init__(self):
-        self.master_address_library = {}
-        self._program_order_counter = 0
+# We need to monkey-patch the standard library for flask-socketio to work with eventlet
+eventlet.monkey_patch()
 
-    def load_program(self, file_path: str):
-        """
-        Loads a single source file as a "program" into the OS.
-        """
-        if not os.path.exists(file_path):
-            print(f"[TesseractOS] Error: File not found at {file_path}")
-            return
-            
-        self._program_order_counter += 1
-        program_name = os.path.basename(file_path)
-        language = self._get_language_from_extension(file_path)
+STATIC_DIR = '.'
 
-        if not language:
-            print(f"[TesseractOS] Warning: Unsupported file type for {file_path}. Skipping.")
-            return
+app = Flask(__name__, static_folder=STATIC_DIR)
+socketio = SocketIO(app)
 
-        print(f"[TesseractOS] Loading {program_name} (Order: {self._program_order_counter}) | Language: {language}")
-        with open(file_path, 'rb') as f:
-            code_bytes = f.read()
+# A dictionary to store the PTY file descriptor and process ID for each session
+sessions = {}
 
-        # Use the existing parser to analyze the code with the correct context
-        parser = CodeParser(language, program_name, self._program_order_counter)
-        parser.parse(code_bytes)
+@app.route('/')
+def serve_index():
+    return send_from_directory(STATIC_DIR, 'index.html')
 
-        # Add the parsed program's library to the master library
-        self.master_address_library[parser.program_identifier] = {
-            "program_name": program_name,
-            "language": language,
-            "order": self._program_order_counter,
-            "functions": parser.address_library
-        }
+@app.route('/<path:path>')
+def serve_static(path):
+    return send_from_directory(STATIC_DIR, path)
 
-    def _get_language_from_extension(self, file_path: str) -> str | None:
-        """
-        Determines the programming language from the file extension.
-        The 'tree-sitter-languages' package supports many of these out of the box.
-        """
-        _, ext = os.path.splitext(file_path)
-        ext_map = {
-            '.py': 'python',
-            '.js': 'javascript',
-            '.ts': 'typescript',
-            '.java': 'java' 
-        }
-        return ext_map.get(ext)
+@socketio.on('connect')
+def handle_connect():
+    """A new client has connected."""
+    sid = request.sid
+    print(f"Client connected: {sid}")
 
-if __name__ == '__main__':
-    os_instance = TesseractOS()
+    # Fork a new pseudo-terminal for this session
+    pid, fd = pty.fork()
 
-    # --- Simulate loading various programs from your project --- #
-    # The order they are loaded here determines their unique address identifier.
-    os_instance.load_program('Codemap-DNA-tesseract/parser.py')
-    os_instance.load_program('Vortex/Vortex.js')
-    os_instance.load_program('Codemap-DNA-tesseract/architect.ts') 
+    if pid == 0:  # This is the child process
+        # Start a new shell session. This will replace the Python process.
+        shell = os.environ.get('SHELL', 'bash')
+        os.execv(shell, [shell])
+    else:  # This is the parent process
+        # Store the process ID and file descriptor for this session
+        sessions[sid] = {'pid': pid, 'fd': fd}
+        print(f"Started shell for session {sid} with PID {pid}")
 
-    # --- Display the resulting master address library --- #
-    print("\n--- Master Tesseract OS Address Library ---")
-    print(json.dumps(os_instance.master_address_library, indent=2))
+        # Start a background task to read output from the PTY
+        socketio.start_background_task(target=read_and_forward_pty_output, sid=sid)
+
+    emit('pty-output', {'output': 'Welcome to the interactive Tesseract OS terminal!\r\n'})
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    """A client has disconnected."""
+    sid = request.sid
+    print(f"Client disconnected: {sid}")
+
+    if sid in sessions:
+        # Terminate the shell process
+        os.kill(sessions[sid]['pid'], 15)
+        # Close the file descriptor
+        os.close(sessions[sid]['fd'])
+        # Remove the session from our dictionary
+        del sessions[sid]
+        print(f"Cleaned up session {sid}")
+
+@socketio.on('pty-input')
+def handle_pty_input(data):
+    """Handle input from the client's terminal."""
+    sid = request.sid
+    if sid in sessions:
+        # Write the input to the pseudo-terminal of the correct session
+        os.write(sessions[sid]['fd'], data['input'].encode())
+
+def read_and_forward_pty_output(sid):
+    """Read output from the PTY and forward it to the client."""
+    fd = sessions[sid]['fd']
+    while True:
+        try:
+            output = os.read(fd, 1024)
+            if output:
+                socketio.emit('pty-output', {'output': output.decode()}, room=sid)
+            else:
+                # PTY has been closed (e.g., user typed 'exit')
+                break
+        except OSError:
+            break
+
+if __name__ == "__main__":
+    # Get the port from the environment, defaulting to 8080
+    port = int(os.environ.get('PORT', 8080))
+    print(f"Starting Tesseract OS server on port {port}...")
+    socketio.run(app, host='0.0.0.0', port=port, debug=False)

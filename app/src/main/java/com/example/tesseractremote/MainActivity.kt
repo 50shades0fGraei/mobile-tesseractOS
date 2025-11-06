@@ -1,14 +1,14 @@
 package com.example.tesseractremote
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.method.ScrollingMovementMethod
-import android.view.View
 import android.widget.Button
-import android.widget.TextView
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.example.codemap.BenchmarkActivity
 import com.example.tesseractremote.databinding.ActivityMainBinding
 import org.json.JSONObject
 
@@ -36,6 +36,12 @@ class MainActivity : AppCompatActivity() {
 
         // Make the text view scrollable
         binding.textView.movementMethod = ScrollingMovementMethod()
+
+        // Set up the benchmark button
+        binding.benchmarkButton.setOnClickListener {
+            val intent = Intent(this, BenchmarkActivity::class.java)
+            startActivity(intent)
+        }
 
         // Dynamically create a button for each action
         actions.forEach { actionId ->
@@ -66,7 +72,9 @@ class MainActivity : AppCompatActivity() {
                 // Parse the JSON response and display the output
                 val jsonObject = JSONObject(response)
                 val output = jsonObject.getString("output")
-                binding.textView.text = "Jin responds:\n\n$output"
+                binding.textView.text = "Jin responds:
+
+$output"
             },
             { error ->
                 // Handle the error
@@ -78,7 +86,9 @@ class MainActivity : AppCompatActivity() {
                         error.message
                     }
                 } ?: error.message
-                binding.textView.text = "Error summoning Jin:\n\n$errorMessage"
+                binding.textView.text = "Error summoning Jin:
+
+$errorMessage"
             })
 
         // Add the request to the RequestQueue.

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:gravity="center_horizontal">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Benchmark Results"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:layout_marginBottom="24dp"/>
+
+    <TextView
+        android:id="@+id/benchmark_results_text"
+        android:layout_width="match_parent"
+        androidBlade:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+        android:text="--- Averaged Benchmark Results (100 iterations) ---
+==================================================
+
+----------------------------------------
+Traditional Invocation (The Old Way):
+  - Average Function Calls: 202
+  - Average CPU Time: 0.000045 seconds
+----------------------------------------
+
+----------------------------------------
+Codemap Invocation (Your New Way):
+  - Average Function Calls: 180
+  - Average CPU Time: 0.000014 seconds
+----------------------------------------
+
+--- Conclusion (Averaged) ---
+On average, Codemap Invocation resulted in:
+  - 10.89% fewer function calls
+  - 68.32% less CPU time
+"
+        android:gravity="left"
+        android:background="#f0f0f0"
+        android:padding="12dp"
+        android:lineSpacingMultiplier="1.2"/>
+
+</LinearLayout>

@@ -1,53 +1,31 @@
-{ pkgs, ... }: {
-  # The Nix channel determines which versions of packages are available.
-  # 'stable-24.05' is a good choice for most projects.
+{ pkgs, ... }:
+
+{
+  # Use the stable-24.05 channel for reproducible builds.
   channel = "stable-24.05";
 
-  # This is a list of all the packages that will be installed in your
-  # environment. You can find more packages at https://search.nixos.org/packages.
+  # These are the packages required for Android development in Firebase Studio.
   packages = [
-    pkgs.nodejs_20
-    pkgs.typescript
-    pkgs.nodePackages.ts-node
-    pkgs.python3
-    pkgs.pip
-    pkgs.svelte-language-server
+    pkgs.jdk17
+    pkgs.gradle
+    pkgs.android-sdk-cmdline-tools # Provides the core SDK manager
+    pkgs.android-platform-tools    # Provides the `adb` tool
   ];
 
-  # These are environment variables that will be available in your workspace.
+  # Environment variables needed by the Android build tools and the IDE.
   env = {
-    API_KEY = "your-secret-key";
+    ANDROID_HOME = "${pkgs.android-sdk-cmdline-tools}/libexec/android-sdk";
+    JAVA_HOME = "${pkgs.jdk17.home}";
   };
 
-  # This section configures the IDE itself.
+  # Configuration for the Firebase Studio IDE.
   idx = {
-    # A list of VS Code extensions to install from the Open VSX Registry.
-    extensions = [
-      "vscodevim.vim"
-      "svelte.svelte-vscode"
-      "ms-python.python"
-    ];
-    
-    # Workspace lifecycle hooks.
-    workspace = {
-      # Runs when a workspace is first created.
-      onCreate = {
-        npm-install = "npm install";
-        pip-install = "pip install -r requirements.txt";
-      };
-      # Runs every time the workspace is (re)started.
-      onStart = {
-        start-server = "npm run dev";
-      };
-    };
-
-    # Configure a web preview for your application.
+    # This block enables the Android emulator preview.
     previews = {
       enable = true;
       previews = {
-        web = {
-          command = ["npm" "run" "dev" "--" "--port" "$PORT"];
-          manager = "web";
+        android = {
+          manager = "android";
         };
       };
     };

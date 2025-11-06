@@ -1,0 +1,111 @@
+
+<script>
+  import { onMount } from 'svelte';
+  import Chart from 'chart.js/auto';
+
+  let chartCanvas;
+
+  // Data from your EXECUTIVE_SUMMARY.md
+  const benchmarkData = {
+    labels: ['Traditional Invocation', 'Codemap Invocation'],
+    datasets: [
+      {
+        label: 'CPU Time (seconds)',
+        data: [0.98, 0.0632],
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.2)',
+          'rgba(75, 192, 192, 0.2)',
+        ],
+        borderColor: [
+          'rgba(255, 99, 132, 1)',
+          'rgba(75, 192, 192, 1)',
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  onMount(() => {
+    const ctx = chartCanvas.getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: benchmarkData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              color: '#E0E0E0', // Light grey ticks
+            },
+            grid: {
+              color: '#444', // Darker grid lines
+            },
+          },
+          x: {
+            ticks: {
+              color: '#E0E0E0', // Light grey ticks
+            },
+            grid: {
+              color: '#444', // Darker grid lines
+            },
+          },
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: '#FFFFFF', // White legend text
+            },
+          },
+          title: {
+            display: true,
+            text: 'Performance Benchmark: CPU Time Reduction',
+            color: '#FFFFFF',
+            font: {
+              size: 18,
+            },
+          },
+        },
+      },
+    });
+  });
+</script>
+
+<main>
+  <h1>Codemap Invocation: Visual Performance</h1>
+  <div class="chart-container">
+    <canvas bind:this={chartCanvas}></canvas>
+  </div>
+</main>
+
+<style>
+  :global(body) {
+    background-color: #1E1E1E;
+    color: #E0E0E0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+      Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  }
+
+  main {
+    padding: 2rem;
+    text-align: center;
+  }
+
+  h1 {
+    color: #FFFFFF;
+    font-weight: 300;
+    margin-bottom: 2rem;
+  }
+
+  .chart-container {
+    position: relative;
+    height: 60vh;
+    width: 80vw;
+    margin: auto;
+    background-color: #2D2D2D;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+</style>
