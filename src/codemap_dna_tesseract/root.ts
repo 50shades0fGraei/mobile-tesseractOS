@@ -3,6 +3,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { summon } from './summon/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -63,6 +64,9 @@ const runRoot = () => {
   }
 
   console.log('Codemap DNA Tesseract OS initialized.');
+
+  // Summon the view_user_profile action
+  summon('view_user_profile');
 };
 
 runRoot();

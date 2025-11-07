@@ -1,4 +1,4 @@
-import { Jin } from '../Jin';
+import { Jin } from '../Jin.js';
 
 export function installCodemap() {
   Jin.order("altar.summon");

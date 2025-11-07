@@ -5,7 +5,7 @@
   "description": "A summon-based operating system.",
   "main": "root.ts",
   "scripts": {
-    "start": "ts-node root.ts",
+    "start": "npm run build && node dist/root.js",
     "build": "tsc"
   },
   "author": "Randall Lujan, Emurica co GRAEI integrations",

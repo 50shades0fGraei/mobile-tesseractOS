@@ -1,4 +1,4 @@
-import { BiometricData } from './vault';
+import { BiometricData } from './vault.js';
 
 export function validateEmotion(segment: string, biometric: BiometricData): boolean {
   // Check typing rhythm, pressure, mistake handling, proofreading
