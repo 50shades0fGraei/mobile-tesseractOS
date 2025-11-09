@@ -6,40 +6,55 @@ This repository contains the source code for the Codemap DNA Tesseract, a revolu
 
 The Tesseract is a data-first architecture that reorganizes the relationship between code and data. This project includes the core Tesseract engine, as well as several example implementations and strategic documents related to its deployment.
 
-## Running the Android Clients
+## Building the Project
 
-This project contains two distinct Android applications that demonstrate the capabilities of the Tesseract architecture on a mobile device.
+This project is configured to be built within a reproducible Nix environment, which ensures that all developers have the exact same set of tools and dependencies.
 
 ### Prerequisites
 
-- [Android Studio](https://developer.android.com/studio) installed and configured on your machine.
-- The Android SDK, with a recent API level (e.g., API 33).
+- The Nix package manager must be installed on your system if you are building outside of a Nix-enabled IDE like Firebase Studio.
 - A connected Android device or a configured Android Emulator.
-- The `adb` (Android Debug Bridge) command-line tool available in your system's PATH.
+- The `adb` (Android Debug Bridge) command-line tool.
 
-### 1. CodemapAndroidHost
+### Build Command
 
-This application is a native Android host that loads the web-based Codemap OS user interface.
+To build the release version of the Android App Bundle (`.aab`), run the following command from the root of the project:
 
-1.  **Open the project:** In Android Studio, select "Open an Existing Project" and navigate to the `CodemapAndroidHost` directory within this repository.
-2.  **Build the project:** Once the project has been synced, you can build the APK using one of these methods:
-    *   From the Android Studio menu, select `Build > Build Bundle(s) / APK(s) > Build APK(s)`.
-    *   From the terminal, navigate to the `CodemapAndroidHost` directory and run `./gradlew assembleDebug`.
-3.  **Install the APK:** Once the build is complete, you can find the APK file in `CodemapAndroidHost/app/build/outputs/apk/debug/`. Install it on your device using `adb`:
+```bash
+nix-shell shell.nix --run "cd CodemapAndroidHost && ./gradlew bundleRelease"
+```
 
-    ```bash
-    adb install CodemapAndroidHost/app/build/outputs/apk/debug/app-debug.apk
-    ```
+Upon successful completion, the App Bundle will be located at:
+`CodemapAndroidHost/app/build/outputs/bundle/release/app-release.aab`
 
-### 2. Tesseract Remote
+## Installing on a Phone
 
-This application is a native Android client that communicates directly with the Tesseract backend to send commands and display results.
+An Android App Bundle (`.aab`) can't be installed directly using `adb`. You need to use `bundletool` to generate a set of APKs specific to your device and then install them.
 
-1.  **Open the project:** In Android Studio, select "Open an Existing Project" and navigate to the `app` directory at the root of this repository. (Note: The Gradle project for this app is in the root `app` folder).
-2.  **Build the project:**
-    *   From the Android Studio menu, select `Build > Build Bundle(s) / APK(s) > Build APK(s)`.
-    *   From the terminal, navigate to the project's root directory and run `./gradlew :app:assembleDebug`.
-3.  **Install the APK:** The APK will be located in `app/build/outputs/apk/debug/`. Install it on your device using `adb`:
-    ```bash
-    adb install app/build/outputs/apk/debug/app-debug.apk
-    ```
+### 1. Download `bundletool`
+
+If you don't have it, you can download `bundletool` from the [official Android developer website](https://developer.android.com/studio/command-line/bundletool).
+
+### 2. Generate Device-Specific APKs
+
+Use `bundletool` to generate a universal APK (`.apks`) from the App Bundle (`.aab`). This is the easiest for local testing.
+
+```bash
+java -jar /path/to/bundletool.jar build-apks --bundle=CodemapAndroidHost/app/build/outputs/bundle/release/app-release.aab --output=codemap.apks --mode=universal
+```
+
+Alternatively, you can generate an APK set specifically for a connected device:
+
+```bash
+java -jar /path/to/bundletool.jar build-apks --connected-device --bundle=CodemapAndroidHost/app/build/outputs/bundle/release/app-release.aab --output=codemap.apks
+```
+
+### 3. Install the APKs
+
+Use `bundletool` to install the generated APK set onto your connected device.
+
+```bash
+java -jar /path/to/bundletool.jar install-apks --apks=codemap.apks
+```
+
+Your app should now be installed on your phone!

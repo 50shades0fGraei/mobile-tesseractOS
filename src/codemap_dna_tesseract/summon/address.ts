@@ -1,4 +1,4 @@
-import segmentsData from '../config/segments.json' assert { type: 'json' };
+import segmentsData from '../config/segments.json' with { type: 'json' };
 
 interface Segment {
   strand: string;

@@ -1,0 +1,9 @@
+{
+  "cyclones": [
+    {
+      "name": "InitialCyclone",
+      "description": "The first cyclone to be invoked.",
+      "entrypoint": "root.ts"
+    }
+  ]
+}

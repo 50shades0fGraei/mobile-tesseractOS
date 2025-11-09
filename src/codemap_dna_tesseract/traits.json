@@ -1,0 +1,8 @@
+{
+  "traits": [
+    {
+      "name": "Trait-Locking",
+      "description": "Ensures predictable and secure execution."
+    }
+  ]
+}

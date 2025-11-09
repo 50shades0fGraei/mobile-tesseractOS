@@ -1,0 +1,8 @@
+default_platform(:android)
+
+platform :android do
+  desc "Build for Beta"
+  lane :beta do
+    gradle(task: "bundle", build_type: "Release")
+  end
+end
