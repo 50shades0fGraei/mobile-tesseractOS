@@ -1,57 +1,82 @@
-{ pkgs, ... }: {
-  # The channel determines which package versions are available.
-  channel = "stable-24.05"; # or "unstable"
 
-  # A list of packages to install from the specified channel.
+{ pkgs, ... }:
+
+let
+  # Define a custom Android SDK with specific versions for reproducibility,
+  # as found in the gemini-build.nix file.
+  android-sdk = pkgs.androidenv.composeAndroidPackages {};
+in
+{
+  # The Nixpkgs channel to use for packages.
+  channel = "stable-24.05"; # Using a stable channel ensures reproducibility.
+
+  # A list of packages to make available in the development environment.
   packages = [
-    pkgs.python311 # Use a specific, unambiguous Python version
-    pkgs.android-studio
-    pkgs.jdk17 # Use a specific, unambiguous JDK version
-    pkgs.gradle
+    pkgs.python3
     pkgs.nodejs_20
-    pkgs.tree-sitter # Keep this for the CLI tool
-    pkgs.ruby
-    pkgs.bundler
-    pkgs.docker_20_10 # Use a specific, unambiguous Docker version
-    pkgs.stdenv.cc.cc.lib # Provides the standard C++ library (libstdc++)
+    pkgs.go
+    pkgs.gdb
+    pkgs.wget
+    pkgs.zip
+    pkgs.unzip
+    pkgs.rsync
+
+    # --- Android & Java Build Environment ---
+    pkgs.jdk17
+    pkgs.gradle # Gradle is necessary for building Android projects.
+    android-sdk  # Use the custom Android SDK defined above.
+    pkgs.termux-api
   ];
 
-  # Enable the Docker daemon service.
-  services.docker.enable = true;
-
-  # Add the default user to the 'docker' group to grant permissions.
-  users.users.user.extraGroups = [ "docker" ];
-
-  # A set of environment variables to define within the workspace.
+  # A map of environment variables to set within the workspace.
   env = {
-    JAVA_HOME = "${pkgs.jdk17}"; # Match the specific JDK version
-    ANDROID_HOME = "${pkgs.android-studio}/share/android-sdk";
+    # --- Java and Android ---
+    JAVA_HOME = "${pkgs.jdk17}";
+
+    # Set ANDROID_HOME to the correct path within the custom SDK derivation.
+    ANDROID_HOME = "${android-sdk}/libexec/android-sdk";
+
+    # --- Firebase Emulator Suite ---
+    GCLOUD_PROJECT = "codemap-dna-tesseract";
+    FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
+    FIREBASE_FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
   };
 
   # A list of VS Code extensions to install from the Open VSX Registry.
-  idx = {
-    extensions = [
-      "vscodevim.vim",
-      "ms-python.python",
-      "dbaeumer.vscode-eslint",
-      "vscjava.vscode-java-pack",
-      "naco-siren.gradle-language",
-      "ms-azuretools.vscode-docker" # Provides a visual UI for Docker
-    ];
+  idx.extensions = [
+    "jnoortheen.nix-ide"
+    "github.copilot"
+    "github.copilot-chat"
+    "svelte.svelte-vscode"
+    "dbaeumer.vscode-eslint"
+    "esbenp.prettier-vscode"
+    "ms-python.python"
+    "ms-python.debugpy"
+    "golang.go"
+    "vscjava.vscode-java-pack"
+  ];
 
-    # Workspace lifecycle hooks.
-    workspace = {
-      # Runs when a workspace is first created.
-      onCreate = {
-        # 1. Create a Python virtual environment
-        create-venv = "python3 -m venv .venv";
-        # 2. Install Python packages into the virtual environment
-        pip-install = ".venv/bin/pip install tree-sitter tree-sitter-languages";
-        npm-install = "npm install";
-      };
-      # Runs every time the workspace is (re)started.
-      onStart = {
-        start-server = "echo 'Android dev environment ready'";
+  # Workspace lifecycle hooks to automate setup tasks.
+  idx.workspace = {
+    # These commands run only when the workspace is first created.
+    onCreate = {
+      install-npm-deps = "npm install";
+      install-python-deps = "pip install --upgrade pip && pip install -r requirements.txt";
+    };
+    # These commands run every time the workspace is (re)started.
+    onStart = {
+       # This command helps diagnose if the environment is reloading correctly.
+      check-java-home = "echo '--- Gemini Diagnostic Check ---' && echo 'JAVA_HOME is set to: $JAVA_HOME' && echo '---------------------------'";
+    };
+  };
+
+  # Web previews for running applications.
+  idx.previews = {
+    enable = true;
+    previews = {
+      tesseract-os = {
+        command = ["sh" "-c" "cd src/codemap_dna_tesseract && python3 tesseract_os.py"];
+        manager = "web";
       };
     };
   };

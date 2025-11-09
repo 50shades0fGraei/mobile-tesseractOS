@@ -1,15 +1,106 @@
+
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Codemap OS</title>
+    <title>Codemap POC</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; background-color: #121212; color: #E0E0E0; padding: 20px; text-align: center; }
+        h1 { color: #BB86FC; }
+        .container { max-width: 600px; margin: auto; }
+        .benchmark { background-color: #1E1E1E; border: 1px solid #333; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        h2 { border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; }
+        button {
+            background-color: #03DAC5; color: #000000; font-size: 16px; font-weight: bold;
+            border: none; border-radius: 5px; padding: 12px 24px; cursor: pointer;
+            display: block; width: 100%; margin-top: 15px;
+        }
+        button.tesseract { background-color: #BB86FC; }
+        button:disabled { background-color: #444; color: #888; }
+        .results { margin-top: 20px; background-color: #252525; padding: 15px; border-radius: 5px; }
+        .results p { margin: 5px 0; font-family: monospace; font-size: 16px; }
+        #status { font-style: italic; color: #999; margin-top: 20px; }
+    </style>
 </head>
 <body>
-    <h1>Welcome to the Codemap OS</h1>
-    <p>This is the initial entry point for your JavaScript-based OS.</p>
+
+    <div class="container">
+        <h1>A/B Benchmark Demo</h1>
+        <p>This demo provides a real-time comparison between a standard computing method and the high-performance Tesseract architecture.</p>
+
+        <div class="benchmark">
+            <h2>Traditional vs. Tesseract</h2>
+            <button onclick="runBenchmark('standard')" id="btn-standard">Run Standard Benchmark</button>
+            <button onclick="runBenchmark('tesseract')" id="btn-tesseract" class="tesseract">Run Tesseract Benchmark</button>
+
+            <div class="results">
+                <p>Standard CPU Time: <span id="standard-result">N/A</span></p>
+                <p>Tesseract CPU Time: <span id="tesseract-result">N/A</span></p>
+            </div>
+        </div>
+
+        <p id="status">Ready. Press a button to begin the test.</p>
+    </div>
 
     <script>
-        // Example of calling the native Android function from JavaScript
-        Android.showToast("Hello from Codemap OS!");
+        const API_BASE_URL = "http://10.0.2.2:8080"; // Special IP for host machine from Android emulator
+
+        const statusEl = document.getElementById('status');
+        const standardResultEl = document.getElementById('standard-result');
+        const tesseractResultEl = document.getElementById('tesseract-result');
+        const standardBtn = document.getElementById('btn-standard');
+        const tesseractBtn = document.getElementById('btn-tesseract');
+
+        async function runBenchmark(type) {
+            let endpoint = '';
+            let resultEl = null;
+
+            if (type === 'standard') {
+                endpoint = '/run/run_standard_benchmark';
+                resultEl = standardResultEl;
+                statusEl.textContent = 'Running standard benchmark... (This will be slow)';
+            } else if (type === 'tesseract') {
+                endpoint = '/run/run_tesseract_benchmark';
+                resultEl = tesseractResultEl;
+                statusEl.textContent = 'Running Tesseract benchmark...';
+            } else {
+                return;
+            }
+
+            // Disable buttons to prevent multiple clicks
+            standardBtn.disabled = true;
+            tesseractBtn.disabled = true;
+            resultEl.textContent = 'Running...';
+
+            try {
+                const response = await fetch(API_BASE_URL + endpoint);
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    resultEl.textContent = data.cpu_time;
+                    statusEl.textContent = `Benchmark '${type}' completed successfully.`;
+                } else {
+                    throw new Error(data.error || 'An unknown error occurred.');
+                }
+
+            } catch (error) {
+                console.error("Benchmark Error:", error);
+                statusEl.textContent = `Error running benchmark: ${error.message}. Is the server running?`;
+                resultEl.textContent = 'Error';
+                // Use native toast to show critical error
+                if (window.Android && window.Android.showToast) {
+                    window.Android.showToast(`Error: ${error.message}`);
+                }
+            } finally {
+                // Re-enable buttons
+                standardBtn.disabled = false;
+                tesseractBtn.disabled = false;
+            }
+        }
     </script>
+
 </body>
 </html>
