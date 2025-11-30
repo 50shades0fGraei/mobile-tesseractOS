@@ -1,72 +1,50 @@
+
 // Copyright ©️ Randall Lujan, Emurica co GRAEI integrations
 
-import * as fs from 'fs';
+import { Manifold } from './CodemapOS/Manifold/Manifold.js';
+import { Aegis } from './CodemapOS/Aegis/Aegis.js';
+import { ProcessEngine } from './CodemapOS/ProcessEngine/ProcessEngine.js';
+import { Librarian } from './CodemapOS/Librarian/Librarian.js';
+import { LibraryFiling } from './CodemapOS/LibraryFiling/LibraryFiling.js';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { summon } from './summon/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Define interfaces for the configuration files
-interface Trait {
-  name: string;
-  description: string;
+async function initializeAndRun() {
+    console.log("Starting CodemapOS Initialization...");
+
+    // 1. Initialize Core Components
+    const manifold = new Manifold();
+    const aegis = new Aegis();
+    const processEngine = new ProcessEngine();
+
+    // 2. Initialize the Librarian
+    const librarian = new Librarian(manifold, aegis, processEngine);
+
+    // 3. Initialize the Library Filing and Register Functions
+    const libraryFiling = new LibraryFiling(librarian);
+    const summonDirectory = path.join(__dirname, 'summon');
+    await libraryFiling.registerFunctionsFromDirectory(summonDirectory);
+
+    // 4. Create a root principal for initial operations
+    const rootPrincipalId = "codemap-os-root";
+    aegis.registerPrincipal(rootPrincipalId, ["*"]); // Grant root all permissions for now
+
+    console.log("CodemapOS Initialized. Ready to Summon.");
+
+    // 5. Example Summon:
+    try {
+        console.log("Attempting to summon 'hello_world' for root principal...");
+        const result = await librarian.summon(rootPrincipalId, "hello_world", { test: "payload" });
+        console.log("Summon successful. Result:", result);
+    } catch (error) {
+        if (error instanceof Error) {
+            console.error("Summoning failed:", error.message);
+        } else {
+            console.error("An unknown error occurred during summoning.");
+        }
+    }
 }
 
-interface Cyclone {
-  name: string;
-  description: string;
-  entrypoint: string;
-}
-
-// Function to read the configuration files
-const readConfig = (): { traits: Trait[], cyclones: Cyclone[] } => {
-  try {
-    const traitsJsonPath = path.join(__dirname, 'traits.json');
-    const traitsData = fs.readFileSync(traitsJsonPath, 'utf-8');
-    const { traits } = JSON.parse(traitsData);
-
-    const cycloneJsonPath = path.join(__dirname, 'cyclone.json');
-    const cycloneData = fs.readFileSync(cycloneJsonPath, 'utf-8');
-    const { cyclones } = JSON.parse(cycloneData);
-
-    return { traits, cyclones };
-  } catch (error) {
-    console.error('Error reading configuration files:', error);
-    return { traits: [], cyclones: [] };
-  }
-};
-
-// Main function for the root process
-const runRoot = () => {
-  console.log('Initializing Codemap DNA Tesseract OS...');
-
-  const { traits, cyclones } = readConfig();
-
-  if (traits.length === 0 || cyclones.length === 0) {
-    console.error('Configuration files are missing or empty. Please run the architect first.');
-    return;
-  }
-
-  console.log('Traits loaded:', traits.map(t => t.name));
-  console.log('Cyclones loaded:', cyclones.map(c => c.name));
-
-  const initialCyclone = cyclones.find(c => c.name === 'InitialCyclone');
-
-  if (initialCyclone) {
-    console.log(`Summoning the initial cyclone: ${initialCyclone.name}`);
-    console.log(`Description: ${initialCyclone.description}`);
-    console.log(`Entrypoint: ${initialCyclone.entrypoint}`);
-    // Here you would add the logic to actually execute the entrypoint
-    console.log('The DNA spiral begins to weave...');
-  } else {
-    console.error('Initial cyclone not found. The OS cannot start.');
-  }
-
-  console.log('Codemap DNA Tesseract OS initialized.');
-
-  // Summon the view_user_profile action
-  summon('view_user_profile');
-};
-
-runRoot();
+initializeAndRun();

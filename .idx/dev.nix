@@ -1,81 +1,62 @@
-
 { pkgs, ... }:
-
 let
-  # Define a custom Android SDK with specific versions for reproducibility,
-  # as found in the gemini-build.nix file.
-  android-sdk = pkgs.androidenv.composeAndroidPackages {};
+  android-sdk-env = pkgs.androidenv.composeAndroidPackages {
+    buildToolsVersions = ["35.0.0"];
+    platformVersions = ["34"];
+    platformTools = true;
+    cmdlineTools = true;
+    acceptAndroidSdkLicenses = true;
+  };
 in
 {
-  # The Nixpkgs channel to use for packages.
-  channel = "stable-24.05"; # Using a stable channel ensures reproducibility.
-
-  # A list of packages to make available in the development environment.
+  channel = "stable-24.05";
   packages = [
-    pkgs.python3
-    pkgs.nodejs_20
-    pkgs.go
+    pkgs.git
     pkgs.gdb
     pkgs.wget
     pkgs.zip
     pkgs.unzip
     pkgs.rsync
-
-    # --- Android & Java Build Environment ---
+    pkgs.jest
+    pkgs.nodejs_20
+    pkgs.go
+    pkgs.flutter
     pkgs.jdk17
-    pkgs.gradle # Gradle is necessary for building Android projects.
-    android-sdk  # Use the custom Android SDK defined above.
-    pkgs.termux-api
+    pkgs.gradle
+    android-sdk-env
   ];
-
-  # A map of environment variables to set within the workspace.
   env = {
-    # --- Java and Android ---
     JAVA_HOME = "${pkgs.jdk17}";
-
-    # Set ANDROID_HOME to the correct path within the custom SDK derivation.
-    ANDROID_HOME = "${android-sdk}/libexec/android-sdk";
-
-    # --- Firebase Emulator Suite ---
+    ANDROID_HOME = "${android-sdk-env}";
     GCLOUD_PROJECT = "codemap-dna-tesseract";
     FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
     FIREBASE_FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
   };
-
-  # A list of VS Code extensions to install from the Open VSX Registry.
   idx.extensions = [
-    "jnoortheen.nix-ide"
+    "vscodevim.vim"
     "github.copilot"
-    "github.copilot-chat"
-    "svelte.svelte-vscode"
-    "dbaeumer.vscode-eslint"
-    "esbenp.prettier-vscode"
-    "ms-python.python"
-    "ms-python.debugpy"
-    "golang.go"
+    "eamodio.gitlens"
+    "dart-code.flutter"
     "vscjava.vscode-java-pack"
+    "redhat.java"
+    "fwcd.kotlin"
+    "sumneko.lua"
+    "firebase.firebase-vscode"
   ];
-
-  # Workspace lifecycle hooks to automate setup tasks.
   idx.workspace = {
-    # These commands run only when the workspace is first created.
     onCreate = {
-      install-npm-deps = "npm install";
-      install-python-deps = "pip install --upgrade pip && pip install -r requirements.txt";
+      npm-install = "npm install";
+      go-mod = "go mod tidy";
     };
-    # These commands run every time the workspace is (re)started.
     onStart = {
-       # This command helps diagnose if the environment is reloading correctly.
-      check-java-home = "echo '--- Gemini Diagnostic Check ---' && echo 'JAVA_HOME is set to: $JAVA_HOME' && echo '---------------------------'";
+      start-server = "npm run dev";
     };
   };
-
-  # Web previews for running applications.
   idx.previews = {
     enable = true;
     previews = {
-      tesseract-os = {
-        command = ["sh" "-c" "cd src/codemap_dna_tesseract && python3 tesseract_os.py"];
+      web = {
+        command = ["npm" "run" "dev" "--" "--port" "$PORT"];
         manager = "web";
       };
     };

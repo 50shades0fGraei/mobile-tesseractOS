@@ -1,4 +1,31 @@
+# General Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+*.log
+*.tmp
 
-# Outreach and deployment artifacts
-src/codemap_dna_tesseract/docs/press_kit/
-public_site/
+# Node.js
+node_modules/
+dist/
+build/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Android/Gradle
+.gradle/
+*.apk
+*.aab
+/captures/
+local.properties
+/CodemapAndroidHost/build/
+/CodemapAndroidHost/.gradle/
+/CodemapAndroidHost/local.properties
+
+# Flutter
+/apps/tesseract_ui/.dart_tool/
+/apps/tesseract_ui/.idea/
+/apps/tesseract_ui/.flutter-plugins
+/apps/tesseract_ui/.flutter-plugins-dependencies
+/apps/tesseract_ui/build/

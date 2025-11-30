@@ -1,4 +1,4 @@
-import { saveToVault } from './vault';
+import { saveToVault } from './vault.js';
 export function logInvocation(segment, mode, biometric) {
     const echo = {
         segment,
