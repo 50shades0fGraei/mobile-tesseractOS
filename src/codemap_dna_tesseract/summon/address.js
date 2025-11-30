@@ -1,4 +1,4 @@
-import segmentsData from '../config/segments.json' assert { type: 'json' };
+import segmentsData from '../config/segments.json' with { type: 'json' };
 const segments = segmentsData;
 export function resolveAddress(segment, strand) {
     const entry = segments[segment];

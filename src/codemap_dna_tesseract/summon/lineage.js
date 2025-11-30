@@ -1,5 +1,5 @@
-import processIndexData from '../config/processIndex.json' assert { type: 'json' };
-import segmentsData from '../config/segments.json' assert { type: 'json' };
+import processIndexData from '../config/processIndex.json' with { type: 'json' };
+import segmentsData from '../config/segments.json' with { type: 'json' };
 import fs from 'fs';
 const processIndex = processIndexData;
 const segments = segmentsData;

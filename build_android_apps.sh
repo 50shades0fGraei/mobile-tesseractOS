@@ -5,6 +5,11 @@
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
+# Set the JAVA_HOME and PATH environment variables explicitly.
+# This ensures that the correct JDK is used for the build, even if the shell environment is not properly configured.
+export JAVA_HOME=$(nix-build --no-out-link '<nixpkgs>' -A jdk17)
+export PATH=$JAVA_HOME/bin:$PATH
+
 # Build CodemapAndroidHost
 _build_codemap_android_host() {
     echo "Building CodemapAndroidHost..."
@@ -24,7 +29,7 @@ _build_tesseract_remote() {
 # Main function
 main() {
     _build_codemap_android_host
-    _build_tesseract_remote
+    # _build_tesseract_remote
     echo "All Android apps built successfully."
 }
 

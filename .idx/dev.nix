@@ -1,48 +1,63 @@
-{ pkgs ? import <nixpkgs> {}, ... }: {
-  # The channel determines which package versions are available.
-  channel = "stable-24.05"; # or "unstable"
-
-  # A list of packages to install from the specified channel.
-  packages = [
-    pkgs.python3
-    pkgs.android-studio
-    pkgs.jdk
-    pkgs.gradle
-    pkgs.nodejs_20
-    pkgs.tree-sitter # Keep this for the CLI tool
-    pkgs.ruby
-    pkgs.bundler
-  ];
-
-  # A set of environment variables to define within the workspace.
-  env = {
-    JAVA_HOME = "${pkgs.jdk}";
-    ANDROID_HOME = "${pkgs.android-studio}/share/android-sdk";
+{ pkgs, ... }:
+let
+  android-sdk-env = pkgs.androidenv.composeAndroidPackages {
+    buildToolsVersions = ["35.0.0"];
+    platformVersions = ["34"];
+    platformTools = true;
+    cmdlineTools = true;
+    acceptAndroidSdkLicenses = true;
   };
-
-  # A list of VS Code extensions to install from the Open VSX Registry.
-  idx = {
-    extensions = [
-      "vscodevim.vim"
-      "ms-python.python"
-      "dbaeumer.vscode-eslint"
-      "vscjava.vscode-java-pack"
-      "naco-siren.gradle-language"
-    ];
-
-    # Workspace lifecycle hooks.
-    workspace = {
-      # Runs when a workspace is first created.
-      onCreate = {
-        # 1. Create a Python virtual environment
-        create-venv = "python3 -m venv .venv";
-        # 2. Install Python packages into the virtual environment
-        pip-install = ".venv/bin/pip install tree-sitter tree-sitter-languages";
-        npm-install = "npm install";
-      };
-      # Runs every time the workspace is (re)started.
-      onStart = {
-        start-server = "echo 'Android dev environment ready'";
+in
+{
+  channel = "stable-24.05";
+  packages = [
+    pkgs.git
+    pkgs.gdb
+    pkgs.wget
+    pkgs.zip
+    pkgs.unzip
+    pkgs.rsync
+    pkgs.jest
+    pkgs.nodejs_20
+    pkgs.go
+    pkgs.flutter
+    pkgs.jdk17
+    pkgs.gradle
+    android-sdk-env
+  ];
+  env = {
+    JAVA_HOME = "${pkgs.jdk17}";
+    ANDROID_HOME = "${android-sdk-env}";
+    GCLOUD_PROJECT = "codemap-dna-tesseract";
+    FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
+    FIREBASE_FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
+  };
+  idx.extensions = [
+    "vscodevim.vim"
+    "github.copilot"
+    "eamodio.gitlens"
+    "dart-code.flutter"
+    "vscjava.vscode-java-pack"
+    "redhat.java"
+    "fwcd.kotlin"
+    "sumneko.lua"
+    "firebase.firebase-vscode"
+  ];
+  idx.workspace = {
+    onCreate = {
+      npm-install = "npm install";
+      go-mod = "go mod tidy";
+    };
+    onStart = {
+      start-server = "npm run dev";
+    };
+  };
+  idx.previews = {
+    enable = true;
+    previews = {
+      web = {
+        command = ["npm" "run" "dev" "--" "--port" "$PORT"];
+        manager = "web";
       };
     };
   };

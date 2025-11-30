@@ -1,5 +1,5 @@
-import traitsData from '../config/traits.json' assert { type: 'json' };
-import cycloneData from '../config/cyclone.json' assert { type: 'json' };
+import traitsData from '../config/traits.json' with { type: 'json' };
+import cycloneData from '../config/cyclone.json' with { type: 'json' };
 const traits = traitsData;
 const cyclone = cycloneData;
 export function validateGlyph({ segment, traits: activeTraits, cyclone: clause }) {
